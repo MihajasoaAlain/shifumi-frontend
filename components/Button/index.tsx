@@ -1,19 +1,14 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+interface ButtonProps {
+  text: string;
+  action: () => void;
+}
 
-export default function ButtonPlay() {
-  const router = useRouter();
-  
-
-  const handleClick = () => {
-    router.push("/game");
-  }
+export default function Button({ buttomProps }: { buttomProps: ButtonProps }) {
   return (
-    <>
-   <button className="button" onClick={handleClick}>
-      Play Game
+    <button type="button" className="button" onClick={buttomProps.action}>
+      {buttomProps.text}
     </button>
-    </>
   );
 }
