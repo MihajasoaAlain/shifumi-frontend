@@ -1,4 +1,7 @@
 "use client";
+
+import Button from "@/components/Button";
+
 export default function Layout({
   children,
 }: Readonly<{
@@ -7,14 +10,18 @@ export default function Layout({
   const handleClick = () => {
     window.history.back();
   };
+
   return (
-    <>
-      <div className="p-4 min-h-full border">
-        <button className="button " onClick={handleClick}>
-          Back
-        </button>
-        <div className="h-full">{children}</div>
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
+      
+      <div className="p-4">
+        <Button buttomProps={{ text: "Back", action: handleClick }} />
       </div>
-    </>
+
+      <div className="flex-1 w-full">
+        {children}
+      </div>
+
+    </div>
   );
 }

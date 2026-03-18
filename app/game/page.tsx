@@ -1,11 +1,11 @@
+'use client'
 import Game from '@/features/game'
 import React from 'react'
 
-
-const page = () => {
+const Page = () => {
   return (
-   <Game />
+      <Game />
   )
 }
 
-export default page
+export default Page
