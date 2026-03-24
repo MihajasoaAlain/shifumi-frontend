@@ -63,3 +63,16 @@ export async function playGame(
 
   return response.json();
 }
+
+export async function listGames(): Promise<Game[]> {
+  const response = await fetch(`${API_BASE_URL}/game`, {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch games");
+  }
+
+  return response.json();
+}
