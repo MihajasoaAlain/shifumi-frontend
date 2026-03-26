@@ -1,9 +1,14 @@
 import Button from "@/components/Button";
 import React from "react";
 import useAddUsernameForm from "./useAddUsernameForm";
+import { useRouter } from "next/navigation";
 
 const Game = () => {
   const { username, openCreateUsernameModal, openJoinUsernameModal } = useAddUsernameForm();
+  const router = useRouter();
+  const pushJoinPage = () => {
+    router.push("/join");
+  }
 
   return (
     <div className="p-4 flex-1 flex flex-col border">
@@ -15,7 +20,7 @@ const Game = () => {
           buttomProps={{ text: "Create Room", action: () => openCreateUsernameModal() }}
         />
         <Button 
-        buttomProps={{text: "Join Room", action: () => openJoinUsernameModal(),
+        buttomProps={{text: "Join Room", action: () => pushJoinPage(),
           }}
         />
       </div>
