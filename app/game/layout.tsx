@@ -14,7 +14,7 @@ export default function Layout({
   return (
     <div className="min-h-screen flex flex-col h-screen ">
       
-      <div className="p-4 bg-linear-to-b from-white to-slate-100">
+      <div className="p-4 bg-linear-to-b">
         <Button buttomProps={{ text: "Back", action: handleClick }} />
       </div>
         {children}
