@@ -41,9 +41,9 @@ const useAddUsernameForm = () => {
   const openCreateUsernameModal = () => {
     openModal({
       children: createElement(UsernameForm, {
-        title: "Creer une partie",
-        description: "Choisis le pseudo qui sera affiche dans la partie.",
-        submitLabel: "Creer la partie",
+        title: "Create a new game",
+        description: "Choose a username to create a new game and wait for an opponent to join.",
+        submitLabel: "Create",
         initialValue: username,
         mode: "create",
         onCreateSubmit: handleCreateGame,
@@ -54,9 +54,9 @@ const useAddUsernameForm = () => {
   const openJoinUsernameModal = () => {
     openModal({
       children: createElement(UsernameForm, {
-        title: "Rejoindre une partie",
-        description: "Choisis ton pseudo puis selectionne une partie en attente.",
-        submitLabel: "Rejoindre",
+        title: "Join an existing game",
+        description: "Choose a username and select a game to join an existing game and play against an opponent.",
+        submitLabel: "Join",
         initialValue: username,
         mode: "join",
         onJoinSubmit: handleJoinGame,

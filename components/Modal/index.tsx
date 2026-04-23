@@ -104,7 +104,7 @@ export default function CreateUsernameModal({
 
   return (
     <form
-      className="flex flex-col gap-5 rounded-[24px] border-2 border-dashed border-[var(--primary)] bg-[var(--background)] p-6 text-[var(--secondary)] shadow-[0_0_0_4px_#eaddca,2px_2px_4px_2px_rgba(0,0,0,0.5)]"
+      className="flex flex-col gap-5 rounded-[24px]   bg-white p-6 text-[var(--secondary)] shadow-[0_0_0_4px_#eaddca,2px_2px_4px_2px_rgba(0,0,0,0.5)]"
       onSubmit={handleSubmit}
     >
       <div className="flex justify-end">

@@ -17,3 +17,28 @@ export interface PlayRequest {
   username: string;
   choice: Exclude<Choice, "">;
 }
+
+export type GameEventType =
+  | "game.created"
+  | "game.snapshot"
+  | "game.updated"
+  | "round.completed";
+
+export type RoundResultData = {
+  message: string;
+  result: "draw" | "win";
+  winner?: string;
+  choices: Record<string, Choice>;
+  scores: Record<string, number>;
+};
+
+export type GameUpdatedData = {
+  action: "player_joined" | "choice_submitted";
+  username: string;
+};
+
+export interface GameEvent {
+  type: GameEventType;
+  game?: Game;
+  data?: RoundResultData | GameUpdatedData | Record<string, unknown>;
+}
