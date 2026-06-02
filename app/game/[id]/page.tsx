@@ -1,11 +1,79 @@
 "use client";
 
+import Backdrop from "@/components/Backdrop";
 import useGameEvents from "@/features/game/useGameEvents";
-import { getGame, joinGame } from "@/lib/api";
+import { getGame, joinGame, playGame } from "@/lib/api";
 import useCreateUsernameStore from "@/store/game/username";
-import type { Game } from "@/types/game";
+import type { Choice, Game, Player } from "@/types/game";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+
+const CHOICES: { value: Choice; label: string; emoji: string }[] = [
+  { value: "rock", label: "Pierre", emoji: "🪨" },
+  { value: "paper", label: "Papier", emoji: "📄" },
+  { value: "scissors", label: "Ciseaux", emoji: "✂️" },
+];
+
+const CHOICE_EMOJI: Record<string, string> = {
+  rock: "🪨",
+  paper: "📄",
+  scissors: "✂️",
+};
+
+function PlayerSlot({
+  player,
+  isMe,
+}: {
+  player: Player | undefined;
+  isMe: boolean;
+}) {
+  if (!player) {
+    return (
+      <div className="card flex flex-1 flex-col items-center gap-2 p-5 opacity-60">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-dashed border-[var(--primary)] text-2xl">
+          ?
+        </div>
+        <p className="font-display text-base text-[var(--secondary)]/70">
+          En attente…
+        </p>
+        <p className="font-display text-4xl font-black text-[var(--secondary)]/30">
+          0
+        </p>
+      </div>
+    );
+  }
+
+  const initials = player.username
+    .split(" ")
+    .map((s) => s[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  return (
+    <div
+      className={`card flex flex-1 flex-col items-center gap-2 p-5 ${
+        isMe ? "ring-2 ring-[var(--primary)] ring-offset-2 ring-offset-[var(--background)]" : ""
+      }`}
+    >
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--primary)] text-lg font-bold text-white">
+        {initials}
+      </div>
+      <p className="font-display text-base font-semibold text-[var(--secondary)]">
+        {player.username}
+        {isMe && (
+          <span className="ml-1 text-xs text-[var(--primary)]">(vous)</span>
+        )}
+      </p>
+      <p className="font-display text-5xl font-black leading-none text-[var(--secondary)]">
+        {player.score}
+      </p>
+      <p className="text-xs text-[var(--secondary)]/70">
+        {player.hasChosen ? "a joué ✓" : "à son tour de jouer"}
+      </p>
+    </div>
+  );
+}
 
 export default function GamePage() {
   const params = useParams();
@@ -31,6 +99,9 @@ export default function GamePage() {
   const [username, setUsername] = useState("");
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState("");
+
+  const [playing, setPlaying] = useState(false);
+  const [playError, setPlayError] = useState("");
 
   useEffect(() => {
     if (!gameId) return;
@@ -86,32 +157,28 @@ export default function GamePage() {
     }
   };
 
+  const handlePlay = async (choice: Choice) => {
+    if (!storedUsername) return;
+    try {
+      setPlaying(true);
+      setPlayError("");
+      await playGame(gameId, { username: storedUsername, choice });
+    } catch (err) {
+      setPlayError(err instanceof Error ? err.message : "Failed to play round");
+    } finally {
+      setPlaying(false);
+    }
+  };
+
   const loading = initialLoading && !game;
 
   if (loading) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 text-white">
-        <div className="text-center">
-          <svg
-            className="mx-auto h-10 w-10 animate-spin text-gray-300"
-            viewBox="0 0 24 24"
-            fill="none"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-            />
-          </svg>
-          <p className="mt-4 text-gray-300">Chargement de la partie...</p>
+      <main className="relative min-h-screen flex items-center justify-center">
+        <Backdrop />
+        <div className="text-center text-[var(--secondary)]">
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-dashed border-[var(--primary)]" />
+          <p className="mt-4 font-display italic">Chargement de la partie…</p>
         </div>
       </main>
     );
@@ -119,38 +186,50 @@ export default function GamePage() {
 
   if (!game) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 text-white">
-        <p className="text-lg">
-          {initialError ?? streamError ?? "Aucune partie trouvée."}
-        </p>
+      <main className="relative min-h-screen flex items-center justify-center px-4">
+        <Backdrop />
+        <div className="card p-8 text-center">
+          <p className="text-3xl">🤷</p>
+          <p className="mt-2 font-display text-lg text-[var(--secondary)]">
+            {initialError ?? streamError ?? "Aucune partie trouvée."}
+          </p>
+        </div>
       </main>
     );
   }
 
-  const canStart = game.players.length >= 2 && game.status !== "playing";
+  const me = storedUsername
+    ? game.players.find((p) => p.username === storedUsername)
+    : undefined;
+  const isPlayer = Boolean(me);
+  const isFull = game.players.length >= 2;
+  const iHaveChosen = me?.hasChosen ?? false;
+  const canPlay = joined && isFull && !iHaveChosen && !playing;
+
   const connectionLabel = !joined
-    ? "not joined"
+    ? "non connecté"
     : status === "open"
-      ? "live"
+      ? "en direct"
       : status === "connecting"
-        ? "connecting…"
+        ? "connexion…"
         : status === "error"
-          ? "reconnecting…"
-          : "offline";
+          ? "reconnexion…"
+          : "hors ligne";
 
   return (
-    <main className="min-h-screen p-6 bg-gradient-to-br from-gray-100 to-white">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <header className="rounded-2xl p-6 shadow-md bg-white flex items-center justify-between">
+    <main className="relative min-h-screen p-4 sm:p-6">
+      <Backdrop />
+      <div className="max-w-3xl mx-auto space-y-6">
+        <header className="card hero-fade flex items-center justify-between p-5">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">
+            <h1 className="font-display text-2xl font-black text-[var(--secondary)]">
               Partie #{game.id}
             </h1>
-            <p className="mt-1 text-sm text-gray-500 flex items-center gap-2">
+            <p className="mt-1 text-sm text-[var(--secondary)]/70 flex items-center gap-2">
               <span
                 className={`h-2 w-2 rounded-full ${
-                  status === "open"
-                    ? "bg-green-500"
+                  status === "open" && joined
+                    ? "bg-green-600"
                     : status === "error"
                       ? "bg-red-500"
                       : "bg-yellow-500"
@@ -160,34 +239,60 @@ export default function GamePage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-4">
-            <span
-              className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                game.status === "playing"
-                  ? "bg-green-100 text-green-800"
-                  : game.status === "ready"
-                    ? "bg-blue-100 text-blue-800"
-                    : "bg-yellow-100 text-yellow-800"
-              }`}
-            >
-              {game.status}
-            </span>
-            <button
-              className={`px-4 py-2 rounded-lg text-white font-semibold shadow-sm transition ${
-                canStart
-                  ? "bg-indigo-600 hover:bg-indigo-700"
-                  : "bg-gray-300 cursor-not-allowed text-gray-600"
-              }`}
-              disabled={!canStart}
-            >
-              Start
-            </button>
-          </div>
+          <span className="inline-flex items-center rounded-full border-2 border-dashed border-[var(--primary)] px-3 py-1 text-sm font-medium text-[var(--secondary)]">
+            {game.status === "playing"
+              ? "manche en cours"
+              : game.status === "ready"
+                ? "prêt"
+                : "en attente"}
+          </span>
         </header>
 
-        {game.players.length < 2 && (
-          <section className="rounded-2xl p-6 shadow bg-white space-y-3">
-            <h2 className="text-lg font-semibold text-gray-700">
+        {/* Face-à-face */}
+        <section className="hero-fade flex items-stretch gap-3 sm:gap-4">
+          <PlayerSlot
+            player={game.players[0]}
+            isMe={game.players[0]?.username === storedUsername}
+          />
+          <div className="flex items-center">
+            <span
+              className="font-display text-2xl font-black text-[var(--primary)] sm:text-3xl"
+              style={{ textShadow: "1px 1px 0 rgba(0,0,0,0.25)" }}
+            >
+              VS
+            </span>
+          </div>
+          <PlayerSlot
+            player={game.players[1]}
+            isMe={game.players[1]?.username === storedUsername}
+          />
+        </section>
+
+        {/* Résultat de la dernière manche */}
+        {lastRound && (
+          <section className="card hero-fade flex flex-col items-center gap-3 p-5">
+            <p className="font-display text-xl font-bold text-[var(--secondary)]">
+              {lastRound.result === "draw"
+                ? "🤝 Égalité"
+                : `🏆 ${lastRound.winner} l'emporte`}
+            </p>
+            <div className="flex items-center gap-6">
+              {Object.entries(lastRound.choices).map(([name, choice]) => (
+                <div key={name} className="flex flex-col items-center gap-1">
+                  <span className="text-4xl">{CHOICE_EMOJI[choice] ?? "❔"}</span>
+                  <span className="text-xs text-[var(--secondary)]/70">
+                    {name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Zone de jeu / rejoindre */}
+        {!isPlayer && !isFull && (
+          <section className="card hero-fade space-y-3 p-6">
+            <h2 className="font-display text-lg font-semibold text-[var(--secondary)]">
               Rejoindre la partie
             </h2>
             <div className="flex flex-col sm:flex-row gap-3">
@@ -195,96 +300,64 @@ export default function GamePage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Votre pseudo"
-                className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-gray-800"
+                className="input flex-1"
               />
               <button
                 onClick={handleJoinGame}
                 disabled={joining}
-                className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-semibold disabled:opacity-60"
+                className="button disabled:opacity-60"
               >
-                {joining ? "..." : "Join"}
+                {joining ? "..." : "Rejoindre"}
               </button>
             </div>
-            {joinError && (
-              <p className="text-sm text-red-600">{joinError}</p>
-            )}
+            {joinError && <p className="text-sm text-red-600">{joinError}</p>}
           </section>
         )}
 
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 rounded-2xl p-6 shadow bg-white space-y-4">
-            <h2 className="text-lg font-semibold text-gray-700">
-              Joueurs ({game.players.length})
+        {!isPlayer && isFull && (
+          <section className="card hero-fade p-6 text-center">
+            <p className="text-[var(--secondary)]/80">
+              👀 Cette partie est complète. Vous la suivez en spectateur.
+            </p>
+          </section>
+        )}
+
+        {isPlayer && (
+          <section className="card hero-fade space-y-4 p-6">
+            <h2 className="font-display text-lg font-semibold text-[var(--secondary)] text-center">
+              {!isFull
+                ? "En attente d'un adversaire…"
+                : iHaveChosen
+                  ? "Coup joué — au tour de l'adversaire"
+                  : "À toi de jouer !"}
             </h2>
-
-            {game.players.length === 0 ? (
-              <p className="text-gray-500">Aucun joueur pour le moment.</p>
+            {!isFull ? (
+              <p className="text-center text-[var(--secondary)]/70">
+                Partage le code <span className="font-mono font-bold">{game.id}</span> pour
+                qu&apos;on te rejoigne.
+              </p>
+            ) : iHaveChosen ? (
+              <p className="text-center text-3xl">⏳</p>
             ) : (
-              <div className="space-y-3">
-                {game.players.map((player) => {
-                  const initials = player.username
-                    .split(" ")
-                    .map((s) => s[0])
-                    .slice(0, 2)
-                    .join("")
-                    .toUpperCase();
-                  return (
-                    <div
-                      key={player.username}
-                      className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-full bg-indigo-500 flex items-center justify-center text-white font-semibold">
-                          {initials}
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-800">
-                            {player.username}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            Choice: {player.choice || "not played yet"}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <p className="text-sm text-gray-500">Score</p>
-                        <p className="text-lg font-bold text-gray-800">
-                          {player.score}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                {CHOICES.map((choice) => (
+                  <button
+                    key={choice.value}
+                    onClick={() => handlePlay(choice.value)}
+                    disabled={!canPlay}
+                    className="button flex flex-col items-center gap-2 py-5 transition-transform hover:-translate-y-1 disabled:opacity-60 disabled:hover:translate-y-0"
+                  >
+                    <span className="text-4xl sm:text-5xl">{choice.emoji}</span>
+                    <span className="text-sm">{choice.label}</span>
+                  </button>
+                ))}
               </div>
             )}
-          </div>
-
-          <aside className="rounded-2xl p-6 shadow bg-white space-y-3">
-            <h2 className="text-lg font-semibold text-gray-700">
-              Dernier round
-            </h2>
-            {lastRound ? (
-              <div className="space-y-2 text-sm text-gray-700">
-                <p className="font-medium">
-                  {lastRound.result === "draw"
-                    ? "Égalité"
-                    : `Vainqueur : ${lastRound.winner}`}
-                </p>
-                <ul className="space-y-1">
-                  {Object.entries(lastRound.choices).map(([name, choice]) => (
-                    <li key={name} className="flex justify-between">
-                      <span>{name}</span>
-                      <span className="font-mono">{choice}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : (
-              <p className="text-gray-500 text-sm">Aucun round joué.</p>
+            {playError && (
+              <p className="text-center text-sm text-red-600">{playError}</p>
             )}
-          </aside>
-        </section>
+          </section>
+        )}
       </div>
     </main>
   );

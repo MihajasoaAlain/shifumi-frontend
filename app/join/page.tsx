@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
+import Backdrop from "@/components/Backdrop";
 import { joinGame, listGames } from "@/lib/api";
 import useCreateUsernameStore from "@/store/game/username";
 import { Game } from "@/types/game";
@@ -85,12 +86,16 @@ export default function JoinPage() {
     !username.trim() || !selectedGameId || isLoadingGames || isSubmitting;
 
   return (
-  <main className="min-h-screen bg-background px-4 py-10 text-foreground flex max-h-1/2 justify-center">
-  <div className="w-full max-w-xl flex flex-col gap-6 p-6 rounded">
+  <main className="relative min-h-screen px-4 py-10 flex justify-center items-start">
+  <Backdrop glyphs />
+  <div className="card hero-fade w-full max-w-xl flex flex-col gap-6 p-7">
     <div className="space-y-2">
-      <h1 className="text-2xl font-bold text-black">Rejoindre une partie</h1>
-      <p className="text-sm text-neutral-700">
-        Entre ton pseudo puis selectionne une partie en attente.
+      <span className="inline-flex items-center gap-2 rounded-full border-2 border-dashed border-[var(--primary)] bg-[var(--background)]/60 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-[var(--secondary)]/80">
+        🎮 Rejoindre
+      </span>
+      <h1 className="font-display text-3xl font-black text-[var(--secondary)]">Rejoindre une partie</h1>
+      <p className="text-sm text-[var(--secondary)]/70">
+        Entre ton pseudo puis sélectionne une partie en attente.
       </p>
     </div>
 
@@ -100,23 +105,23 @@ export default function JoinPage() {
         className="input w-full"
         type="text"
         value={username}
-        placeholder="Entre ton username"
+        placeholder="Entre ton pseudo"
         onChange={(event) => setUsernameInput(event.target.value)}
       />
 
       <div className="space-y-3">
-        <p className="text-sm font-medium  text-black">Parties en attente</p>
+        <p className="text-sm font-medium text-[var(--secondary)]">Parties en attente</p>
 
         {isLoadingGames && (
-          <p className="text-sm text-neutral-700">Chargement des parties...</p>
+          <p className="text-sm text-[var(--secondary)]/70">Chargement des parties…</p>
         )}
 
         {!isLoadingGames && gamesError && (
-          <p className="text-sm text-red-400">{gamesError}</p>
+          <p className="text-sm text-red-600">{gamesError}</p>
         )}
 
         {!isLoadingGames && !gamesError && waitingGames.length === 0 && (
-          <p className="text-sm text-neutral-700">
+          <p className="text-sm text-[var(--secondary)]/70">
             Aucune partie en attente disponible.
           </p>
         )}
@@ -143,7 +148,7 @@ export default function JoinPage() {
                     onChange={() => setSelectedGameId(game.id)}
                   />
                   <span className="text-sm">
-                    Session {game.id} - {owner}
+                    🪙 Partie {game.id} — {owner}
                   </span>
                 </label>
               );
@@ -152,11 +157,11 @@ export default function JoinPage() {
         )}
       </div>
 
-      {submitError && <p className="text-sm text-red-400">{submitError}</p>}
+      {submitError && <p className="text-sm text-red-600">{submitError}</p>}
 
       <Button
         buttomProps={{
-          text: isSubmitting ? "Connexion..." : "Rejoindre",
+          text: isSubmitting ? "Connexion…" : "Rejoindre",
           type: "submit",
           disabled: isSubmitDisabled,
           className: "w-full disabled:cursor-not-allowed disabled:opacity-50",

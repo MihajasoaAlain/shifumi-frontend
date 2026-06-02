@@ -3,6 +3,7 @@ export type GameStatus ="waiting" | "ready" | "playing";
 export interface Player{
     username: string;
     choice: Choice | null;
+    hasChosen: boolean;
     score: number;
 }
 export interface Game {
