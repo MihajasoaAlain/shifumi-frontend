@@ -23,6 +23,7 @@ const EVENT_TYPES: GameEventType[] = [
   "game.snapshot",
   "game.updated",
   "round.completed",
+  "game.finished",
 ];
 
 const useGameEvents = (gameId: string | undefined): UseGameEventsResult => {

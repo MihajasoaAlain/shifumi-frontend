@@ -4,7 +4,7 @@ import Backdrop from "@/components/Backdrop";
 import useGameEvents from "@/features/game/useGameEvents";
 import { getGame, joinGame, playGame } from "@/lib/api";
 import useCreateUsernameStore from "@/store/game/username";
-import type { Choice, Game, Player } from "@/types/game";
+import { WINNING_SCORE, type Choice, type Game, type Player } from "@/types/game";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -59,7 +59,7 @@ function PlayerSlot({
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--primary)] text-lg font-bold text-white">
         {initials}
       </div>
-      <p className="font-display text-base font-semibold text-[var(--secondary)]">
+      <p className="font-display max-w-full truncate px-1 text-base font-semibold text-[var(--secondary)]">
         {player.username}
         {isMe && (
           <span className="ml-1 text-xs text-[var(--primary)]">(vous)</span>
@@ -204,7 +204,13 @@ export default function GamePage() {
   const isPlayer = Boolean(me);
   const isFull = game.players.length >= 2;
   const iHaveChosen = me?.hasChosen ?? false;
-  const canPlay = joined && isFull && !iHaveChosen && !playing;
+  const isGameOver = game.status === "finished";
+  const champion = isGameOver
+    ? lastRound?.champion ??
+      game.players.find((p) => p.score >= WINNING_SCORE)?.username
+    : undefined;
+  const iAmChampion = Boolean(champion && champion === storedUsername);
+  const canPlay = joined && isFull && !iHaveChosen && !playing && !isGameOver;
 
   const connectionLabel = !joined
     ? "non connecté"
@@ -220,7 +226,7 @@ export default function GamePage() {
     <main className="relative min-h-screen p-4 sm:p-6">
       <Backdrop />
       <div className="max-w-3xl mx-auto space-y-6">
-        <header className="card hero-fade flex items-center justify-between p-5">
+        <header className="card hero-fade flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="font-display text-2xl font-black text-[var(--secondary)]">
               Partie #{game.id}
@@ -240,13 +246,35 @@ export default function GamePage() {
           </div>
 
           <span className="inline-flex items-center rounded-full border-2 border-dashed border-[var(--primary)] px-3 py-1 text-sm font-medium text-[var(--secondary)]">
-            {game.status === "playing"
-              ? "manche en cours"
-              : game.status === "ready"
-                ? "prêt"
-                : "en attente"}
+            {game.status === "finished"
+              ? "terminée"
+              : game.status === "playing"
+                ? "manche en cours"
+                : game.status === "ready"
+                  ? "prêt"
+                  : "en attente"}
           </span>
         </header>
+
+        {/* Bandeau gagnant */}
+        {isGameOver && champion && (
+          <section
+            className="hero-fade flex flex-col items-center gap-2 rounded-[20px] border-4 border-dashed border-[var(--primary)] bg-[var(--primary)] p-6 text-center text-white shadow-[4px_4px_0_rgba(0,0,0,0.35)]"
+            role="status"
+            aria-live="polite"
+          >
+            <span className="text-5xl" aria-hidden>
+              🏆
+            </span>
+            <p className="font-display text-3xl font-black leading-none drop-shadow">
+              {iAmChampion ? "Victoire !" : `${champion} gagne la partie !`}
+            </p>
+            <p className="text-sm font-medium text-white/90">
+              Premier à {WINNING_SCORE} manches remportées
+              {iAmChampion ? " — bravo à toi 🎉" : ""}
+            </p>
+          </section>
+        )}
 
         {/* Face-à-face */}
         <section className="hero-fade flex items-stretch gap-3 sm:gap-4">
@@ -325,13 +353,21 @@ export default function GamePage() {
         {isPlayer && (
           <section className="card hero-fade space-y-4 p-6">
             <h2 className="font-display text-lg font-semibold text-[var(--secondary)] text-center">
-              {!isFull
-                ? "En attente d'un adversaire…"
-                : iHaveChosen
-                  ? "Coup joué — au tour de l'adversaire"
-                  : "À toi de jouer !"}
+              {isGameOver
+                ? "Partie terminée"
+                : !isFull
+                  ? "En attente d'un adversaire…"
+                  : iHaveChosen
+                    ? "Coup joué — au tour de l'adversaire"
+                    : "À toi de jouer !"}
             </h2>
-            {!isFull ? (
+            {isGameOver ? (
+              <p className="text-center text-[var(--secondary)]/70">
+                {iAmChampion
+                  ? "Tu as atteint le score gagnant. 🎉"
+                  : `${champion} a atteint ${WINNING_SCORE} manches. Mieux la prochaine fois !`}
+              </p>
+            ) : !isFull ? (
               <p className="text-center text-[var(--secondary)]/70">
                 Partage le code <span className="font-mono font-bold">{game.id}</span> pour
                 qu&apos;on te rejoigne.
@@ -339,16 +375,18 @@ export default function GamePage() {
             ) : iHaveChosen ? (
               <p className="text-center text-3xl">⏳</p>
             ) : (
-              <div className="grid grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4">
                 {CHOICES.map((choice) => (
                   <button
                     key={choice.value}
                     onClick={() => handlePlay(choice.value)}
                     disabled={!canPlay}
-                    className="button flex flex-col items-center gap-2 py-5 transition-transform hover:-translate-y-1 disabled:opacity-60 disabled:hover:translate-y-0"
+                    className="flex flex-col items-center gap-2 rounded-[15px] border-2 border-dashed border-[var(--primary)] bg-[#eaddca] px-1 py-4 text-[var(--secondary)] shadow-[0_0_0_4px_#eaddca,2px_2px_4px_2px_rgba(0,0,0,0.45)] transition-transform hover:-translate-y-1 active:translate-x-[0.08em] active:translate-y-[0.08em] disabled:opacity-60 disabled:hover:translate-y-0 sm:py-5"
                   >
                     <span className="text-4xl sm:text-5xl">{choice.emoji}</span>
-                    <span className="text-sm">{choice.label}</span>
+                    <span className="text-xs font-semibold sm:text-sm">
+                      {choice.label}
+                    </span>
                   </button>
                 ))}
               </div>
