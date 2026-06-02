@@ -61,3 +61,52 @@ body {
   transform: translateX(0.05em) translateY(0.05em);
   box-shadow: 0 0 0 4px #eaddca, 1px 1px 3px 1px rgba(0, 0, 0, 0.5);
 }
+
+.font-display {
+  font-family: var(--font-display), Georgia, serif;
+}
+
+.card {
+  border: 2px dashed var(--primary);
+  border-radius: 1rem;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px #eaddca, 2px 2px 4px 2px rgba(0, 0, 0, 0.35);
+}
+
+@keyframes hero-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hero-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--rot, 0deg));
+  }
+  50% {
+    transform: translateY(-14px) rotate(var(--rot, 0deg));
+  }
+}
+
+.hero-fade {
+  opacity: 0;
+  animation: hero-fade-up 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+
+.hero-float {
+  animation: hero-float 8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-fade,
+  .hero-float {
+    animation: none;
+    opacity: 1;
+  }
+}

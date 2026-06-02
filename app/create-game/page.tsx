@@ -1,6 +1,7 @@
 "use client";
 
 import { createGame } from "@/lib/api";
+import Backdrop from "@/components/Backdrop";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -26,24 +27,31 @@ export default function CreateGamePage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
+    <main className="relative min-h-screen flex items-center justify-center px-4 text-[var(--secondary)]">
+      <Backdrop glyphs />
 
-      <div className="bg-gray-800 p-8 rounded-xl shadow-lg space-y-6 w-[320px]">
+      <div className="card hero-fade flex w-full max-w-sm flex-col items-center gap-6 p-8">
 
-        <h1 className="text-2xl font-bold text-center">
+        <div className="flex items-center gap-3 text-3xl select-none" aria-hidden>
+          <span>🪨</span>
+          <span>📄</span>
+          <span>✂️</span>
+        </div>
+
+        <h1 className="font-display text-3xl font-black text-center">
           Créer une partie
         </h1>
 
         <button
           onClick={handleCreateGame}
           disabled={loading}
-          className="w-full py-3 bg-green-600 hover:bg-green-700 rounded-lg transition disabled:opacity-50"
+          className="button w-full disabled:opacity-50"
         >
-          {loading ? "Création..." : "Créer la partie"}
+          {loading ? "Création…" : "Créer la partie"}
         </button>
 
         {error && (
-          <p className="text-red-400 text-sm text-center">
+          <p className="text-red-600 text-sm text-center">
             {error}
           </p>
         )}

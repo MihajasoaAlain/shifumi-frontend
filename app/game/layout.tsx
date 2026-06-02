@@ -12,13 +12,11 @@ export default function Layout({
   };
 
   return (
-    <div className="min-h-screen flex flex-col h-screen ">
-      
-      <div className="p-4 bg-linear-to-b">
-        <Button buttomProps={{ text: "Back", action: handleClick }} />
+    <div className="min-h-screen flex flex-col">
+      <div className="p-4">
+        <Button buttomProps={{ text: "← Retour", action: handleClick }} />
       </div>
-        {children}
-
+      {children}
     </div>
   );
 }

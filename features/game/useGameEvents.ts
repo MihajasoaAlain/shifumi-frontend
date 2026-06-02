@@ -35,6 +35,8 @@ const useGameEvents = (gameId: string | undefined): UseGameEventsResult => {
   useEffect(() => {
     if (!gameId) return;
 
+    // Reset the connection UI whenever we (re)subscribe to a new SSE stream.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStatus("connecting");
     setError(null);
 

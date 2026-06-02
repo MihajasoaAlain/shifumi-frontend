@@ -119,7 +119,7 @@ export default function CreateUsernameModal({
       </div>
 
       <div className="space-y-2">
-        <h2 className="text-xl font-semibold">{title}</h2>
+        <h2 className="font-display text-2xl font-black">{title}</h2>
         <p className="text-sm text-[var(--secondary)]/80">{description}</p>
       </div>
 
@@ -158,7 +158,11 @@ export default function CreateUsernameModal({
                 return (
                   <label
                     key={game.id}
-                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-[var(--primary)]/40 px-4 py-3"
+                    className={`flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed px-4 py-3 transition ${
+                      selectedGameId === game.id
+                        ? "border-[var(--primary)] bg-[var(--background)]/70"
+                        : "border-[var(--primary)]/40"
+                    }`}
                   >
                     <input
                       type="radio"
@@ -168,7 +172,7 @@ export default function CreateUsernameModal({
                       onChange={() => setSelectedGameId(game.id)}
                     />
                     <span className="text-sm">
-                      Session {game.id} - {owner}
+                      🪙 Partie {game.id} — {owner}
                     </span>
                   </label>
                 );

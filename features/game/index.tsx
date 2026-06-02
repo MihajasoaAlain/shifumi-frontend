@@ -1,4 +1,5 @@
 import Button from "@/components/Button";
+import Backdrop from "@/components/Backdrop";
 import React from "react";
 import useAddUsernameForm from "./useAddUsernameForm";
 import { useRouter } from "next/navigation";
@@ -8,16 +9,39 @@ const Game = () => {
   const router = useRouter();
 
   return (
-    <main className="min-h-screen flex items-center justify-around  bg-linear-to-b from-white to-slate-100">
-      <div className="w-full max-w-md bg-slate-100 rounded-xl shadow-lg p-8 flex flex-col items-center">
-        <h1 className="text-4xl sm:text-5xl font-extrabold mb-2 text-center text-slate-800">SHIFUMI  🪨</h1>
+    <main className="relative min-h-screen flex items-center justify-center px-4 py-10">
+      <Backdrop glyphs />
+
+      <div className="card hero-fade w-full max-w-md p-8 flex flex-col items-center">
+        <span
+          className="mb-4 inline-flex items-center gap-2 rounded-full border-2 border-dashed border-[var(--primary)] bg-[var(--background)]/60 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-[var(--secondary)]/80"
+        >
+          Salle de jeu
+        </span>
+
+        <h1
+          className="font-display text-5xl sm:text-6xl font-black text-[var(--secondary)] leading-none"
+          style={{ textShadow: "2px 2px 0 rgba(218,160,109,0.55)" }}
+        >
+          SHIFUMI
+        </h1>
+
+        <div className="mt-3 flex items-center gap-3 text-3xl select-none" aria-hidden>
+          <span>🪨</span>
+          <span>📄</span>
+          <span>✂️</span>
+        </div>
+
         {username && (
-          <h2 className="text-lg mb-4 text-center text-black">Welcome, {username}!</h2>
+          <h2 className="mt-4 font-display text-lg italic text-[var(--secondary)]/80">
+            Salut, {username} !
+          </h2>
         )}
-        <div className="w-full flex flex-col gap-4 mt-6">
+
+        <div className="w-full flex flex-col gap-4 mt-8">
           <Button
             buttomProps={{
-              text: "Create Room",
+              text: "➕  Créer une salle",
               action: () => openCreateUsernameModal(),
               className: "w-full text-lg py-3",
             }}
@@ -25,7 +49,7 @@ const Game = () => {
 
           <Button
             buttomProps={{
-              text: "Join Room",
+              text: "🎮  Rejoindre une partie",
               action: () => openJoinUsernameModal(),
               className: "w-full text-lg py-3",
             }}
@@ -33,9 +57,9 @@ const Game = () => {
 
           <Button
             buttomProps={{
-              text: "Quit",
+              text: "← Retour",
               action: () => router.back(),
-              className: "w-full text-lg py-3 bg-red-500 hover:bg-red-600 text-white",
+              className: "w-full py-3 text-[var(--secondary)]/70",
             }}
           />
         </div>

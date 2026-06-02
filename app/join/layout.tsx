@@ -15,7 +15,7 @@ export default function Layout({
     <div className="min-h-screen  flex flex-col">
       
       <div className="p-4">
-        <Button buttomProps={{ text: "Back", action: handleClick }} />
+        <Button buttomProps={{ text: "← Retour", action: handleClick }} />
       </div>
 
       <div className="flex-1 w-full">
