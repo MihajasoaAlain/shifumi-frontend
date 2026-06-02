@@ -20,7 +20,7 @@ const Home = () => {
       <div className="flex w-full max-w-2xl flex-col items-center text-center">
         {/* Kicker */}
         <span
-          className="hero-fade mb-7 inline-flex items-center gap-2 rounded-full border-2 border-dashed border-[var(--primary)] bg-[var(--background)]/60 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-[var(--secondary)]/80 shadow-[0_0_0_4px_#eaddca]"
+          className="hero-fade mb-7 inline-flex max-w-[90vw] items-center gap-2 rounded-full border-2 border-dashed border-[var(--primary)] bg-[var(--background)]/60 px-3 py-1.5 text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-[var(--secondary)]/80 shadow-[0_0_0_4px_#eaddca] sm:px-4 sm:text-xs sm:tracking-[0.28em]"
           style={{ animationDelay: '0.05s' }}
         >
           Pierre · Papier · Ciseaux
@@ -44,7 +44,7 @@ const Home = () => {
 
         {/* Titre */}
         <h1
-          className="hero-fade font-display text-7xl font-black leading-[0.9] tracking-tight text-[var(--secondary)] sm:text-8xl"
+          className="hero-fade font-display text-6xl font-black leading-[0.9] tracking-tight text-[var(--secondary)] sm:text-8xl"
           style={{
             animationDelay: '0.25s',
             textShadow: '3px 3px 0 rgba(218,160,109,0.55)',
@@ -70,7 +70,7 @@ const Home = () => {
           {MOVES.map((move) => (
             <div
               key={move.label}
-              className="flex w-24 flex-col items-center gap-1 rounded-2xl border-2 border-dashed border-[var(--primary)] bg-white px-3 py-3 shadow-[0_0_0_4px_#eaddca,2px_2px_4px_2px_rgba(0,0,0,0.35)] transition-transform duration-200 hover:-translate-y-1.5 hover:rotate-0 sm:w-28"
+              className="flex w-20 flex-col items-center gap-1 rounded-2xl border-2 border-dashed border-[var(--primary)] bg-white px-2 py-3 shadow-[0_0_0_4px_#eaddca,2px_2px_4px_2px_rgba(0,0,0,0.35)] transition-transform duration-200 hover:-translate-y-1.5 hover:rotate-0 sm:w-28 sm:px-3"
               style={{ rotate: move.rot }}
             >
               <span className="text-3xl sm:text-4xl">{move.emoji}</span>
