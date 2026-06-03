@@ -42,8 +42,8 @@ export type RoundResultData = {
 };
 
 export type GameUpdatedData = {
-  action: "player_joined" | "choice_submitted";
-  username: string;
+  action: "player_joined" | "choice_submitted" | "rematch";
+  username?: string;
 };
 
 export type GameFinishedData = {
