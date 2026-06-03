@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useModalStore } from "@/store/Modal/useModal";
 import { listGames } from "@/lib/api";
 import { Game } from "@/types/game";
+import { Close, Coin } from "@/components/Svg";
 
 type JoinSessionPayload = {
   username: string;
@@ -111,10 +112,10 @@ export default function CreateUsernameModal({
         <button
           type="button"
           aria-label="Close modal"
-          className="button flex h-8 w-8 items-center justify-center px-0 py-0 text-lg leading-none"
+          className="button flex h-8 w-8 items-center justify-center px-0 py-0 leading-none"
           onClick={closeModal}
         >
-          ×
+          <Close className="h-4 w-4" />
         </button>
       </div>
 
@@ -171,8 +172,9 @@ export default function CreateUsernameModal({
                       checked={selectedGameId === game.id}
                       onChange={() => setSelectedGameId(game.id)}
                     />
-                    <span className="text-sm">
-                      🪙 Partie {game.id} — {owner}
+                    <span className="flex items-center gap-2 text-sm">
+                      <Coin className="h-4 w-4 text-[var(--primary)]" /> Partie{" "}
+                      {game.id} — {owner}
                     </span>
                   </label>
                 );

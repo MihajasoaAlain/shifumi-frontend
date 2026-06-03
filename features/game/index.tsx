@@ -3,6 +3,14 @@ import Backdrop from "@/components/Backdrop";
 import React from "react";
 import useAddUsernameForm from "./useAddUsernameForm";
 import { useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  Controller,
+  Paper,
+  Plus,
+  Rock,
+  Scissors,
+} from "@/components/Svg";
 
 const Game = () => {
   const { username, openCreateUsernameModal, openJoinUsernameModal } = useAddUsernameForm();
@@ -26,10 +34,13 @@ const Game = () => {
           SHIFUMI
         </h1>
 
-        <div className="mt-3 flex items-center gap-3 text-3xl select-none" aria-hidden>
-          <span>🪨</span>
-          <span>📄</span>
-          <span>✂️</span>
+        <div
+          className="mt-3 flex items-center gap-4 text-[var(--secondary)] select-none"
+          aria-hidden
+        >
+          <Rock className="h-8 w-8" />
+          <Paper className="h-8 w-8" />
+          <Scissors className="h-8 w-8" />
         </div>
 
         {username && (
@@ -41,7 +52,8 @@ const Game = () => {
         <div className="w-full flex flex-col gap-4 mt-8">
           <Button
             buttomProps={{
-              text: "➕  Créer une salle",
+              text: "Créer une salle",
+              icon: <Plus className="h-5 w-5" />,
               action: () => openCreateUsernameModal(),
               className: "w-full text-lg py-3",
             }}
@@ -49,7 +61,8 @@ const Game = () => {
 
           <Button
             buttomProps={{
-              text: "🎮  Rejoindre une partie",
+              text: "Rejoindre une partie",
+              icon: <Controller className="h-5 w-5" />,
               action: () => openJoinUsernameModal(),
               className: "w-full text-lg py-3",
             }}
@@ -57,7 +70,8 @@ const Game = () => {
 
           <Button
             buttomProps={{
-              text: "← Retour",
+              text: "Retour",
+              icon: <ArrowLeft className="h-4 w-4" />,
               action: () => router.back(),
               className: "w-full py-3 text-[var(--secondary)]/70",
             }}

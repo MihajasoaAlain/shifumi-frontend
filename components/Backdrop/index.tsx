@@ -1,7 +1,9 @@
+import { Paper, Rock, Scissors } from '@/components/Svg';
+
 const GLYPHS = [
-  { emoji: '✊', className: 'left-[6%] top-[14%] text-[8rem] sm:text-[12rem]', rot: '-12deg', delay: '0s' },
-  { emoji: '✋', className: 'bottom-[10%] left-[10%] text-[7rem] sm:text-[10rem]', rot: '10deg', delay: '1.6s' },
-  { emoji: '✌️', className: 'right-[7%] top-[22%] text-[8rem] sm:text-[12rem]', rot: '14deg', delay: '0.8s' },
+  { Icon: Rock, className: 'left-[6%] top-[14%] h-32 w-32 sm:h-48 sm:w-48', rot: '-12deg', delay: '0s' },
+  { Icon: Paper, className: 'bottom-[10%] left-[10%] h-28 w-28 sm:h-40 sm:w-40', rot: '10deg', delay: '1.6s' },
+  { Icon: Scissors, className: 'right-[7%] top-[22%] h-32 w-32 sm:h-48 sm:w-48', rot: '14deg', delay: '0.8s' },
 ];
 
 const Backdrop = ({ glyphs = false }: { glyphs?: boolean }) => (
@@ -27,15 +29,13 @@ const Backdrop = ({ glyphs = false }: { glyphs?: boolean }) => (
       }}
     />
     {glyphs &&
-      GLYPHS.map((g) => (
-        <span
-          key={g.emoji}
+      GLYPHS.map((g, i) => (
+        <g.Icon
+          key={i}
           aria-hidden
-          className={`hero-float pointer-events-none fixed -z-10 select-none opacity-[0.07] ${g.className}`}
+          className={`hero-float pointer-events-none fixed -z-10 select-none text-[var(--secondary)] opacity-[0.07] ${g.className}`}
           style={{ ['--rot' as string]: g.rot, animationDelay: g.delay }}
-        >
-          {g.emoji}
-        </span>
+        />
       ))}
   </>
 );

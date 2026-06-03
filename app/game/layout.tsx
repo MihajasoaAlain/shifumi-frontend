@@ -1,6 +1,7 @@
 "use client";
 
 import Button from "@/components/Button";
+import { ArrowLeft } from "@/components/Svg";
 
 export default function Layout({
   children,
@@ -14,7 +15,13 @@ export default function Layout({
   return (
     <div className="min-h-screen flex flex-col">
       <div className="p-4">
-        <Button buttomProps={{ text: "← Retour", action: handleClick }} />
+        <Button
+          buttomProps={{
+            text: "Retour",
+            icon: <ArrowLeft className="h-4 w-4" />,
+            action: handleClick,
+          }}
+        />
       </div>
       {children}
     </div>

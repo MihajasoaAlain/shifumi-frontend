@@ -76,6 +76,18 @@ export async function playGame(
   return response.json();
 }
 
+export async function rematchGame(id: string): Promise<Game> {
+  const response = await safeFetch(`${API_BASE_URL}/game/${id}/rematch`, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    throw new Error(await readError(response, "Failed to restart game"));
+  }
+
+  return response.json();
+}
+
 export async function listGames(): Promise<Game[]> {
   const response = await safeFetch(`${API_BASE_URL}/game`, {
     method: "GET",

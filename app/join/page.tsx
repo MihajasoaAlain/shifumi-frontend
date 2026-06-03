@@ -7,6 +7,7 @@ import Backdrop from "@/components/Backdrop";
 import { joinGame, listGames } from "@/lib/api";
 import useCreateUsernameStore from "@/store/game/username";
 import { Game } from "@/types/game";
+import { Coin, Controller } from "@/components/Svg";
 
 export default function JoinPage() {
   const router = useRouter();
@@ -91,7 +92,7 @@ export default function JoinPage() {
   <div className="card hero-fade w-full max-w-xl flex flex-col gap-6 p-7">
     <div className="space-y-2">
       <span className="inline-flex items-center gap-2 rounded-full border-2 border-dashed border-[var(--primary)] bg-[var(--background)]/60 px-3 py-1 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-[var(--secondary)]/80">
-        🎮 Rejoindre
+        <Controller className="h-4 w-4" /> Rejoindre
       </span>
       <h1 className="font-display text-3xl font-black text-[var(--secondary)]">Rejoindre une partie</h1>
       <p className="text-sm text-[var(--secondary)]/70">
@@ -147,8 +148,9 @@ export default function JoinPage() {
                     checked={selectedGameId === game.id}
                     onChange={() => setSelectedGameId(game.id)}
                   />
-                  <span className="text-sm">
-                    🪙 Partie {game.id} — {owner}
+                  <span className="flex items-center gap-2 text-sm">
+                    <Coin className="h-4 w-4 text-[var(--primary)]" /> Partie{" "}
+                    {game.id} — {owner}
                   </span>
                 </label>
               );
