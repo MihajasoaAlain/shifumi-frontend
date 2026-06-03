@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Button from "@/components/Button";
 import { useModalStore } from "@/store/Modal/useModal";
 
+// Événement non standard (Chrome/Edge/Android) — absent des types DOM par défaut.
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
   prompt: () => Promise<void>;
@@ -11,6 +12,28 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 const DISMISS_KEY = "shifumi-install-dismissed";
+
+const setDismissed = () => {
+  try {
+    localStorage.setItem(DISMISS_KEY, "1");
+  } catch {
+  }
+};
+
+let deferredPrompt: BeforeInstallPromptEvent | null = null;
+let installed = false;
+
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault(); 
+    deferredPrompt = e as BeforeInstallPromptEvent;
+  });
+  window.addEventListener("appinstalled", () => {
+    installed = true;
+    deferredPrompt = null;
+    setDismissed();
+  });
+}
 
 
 const InstallPrompt = () => {
@@ -22,28 +45,21 @@ const InstallPrompt = () => {
     if (window.matchMedia("(display-mode: standalone)").matches) return;
     if (localStorage.getItem(DISMISS_KEY) === "1") return;
 
-    let deferred: BeforeInstallPromptEvent | null = null;
-
-    const remember = () => localStorage.setItem(DISMISS_KEY, "1");
-
     const accept = async () => {
-      if (!deferred) return;
+      if (!deferredPrompt) return;
       closeModal();
-      await deferred.prompt();
-      await deferred.userChoice; 
-      remember();
-      deferred = null;
+      await deferredPrompt.prompt();
+      await deferredPrompt.userChoice; 
+      deferredPrompt = null;
     };
 
-    const later = () => {
-      closeModal();
-      remember();
-    };
-
-    const ask = () =>
+    const ask = () => {
+      if (!deferredPrompt || installed) return;
+    
+      setDismissed();
       openModal({
         children: (
-          <div className="flex flex-col items-center gap-5 p-6 text-center text-[var(--secondary)]">
+          <div className="card flex flex-col items-center gap-5 p-6 text-center text-[var(--secondary)]">
             <h2 className="font-display text-xl font-semibold">
               Installer Shifumi&nbsp;?
             </h2>
@@ -56,7 +72,7 @@ const InstallPrompt = () => {
               <Button
                 buttomProps={{
                   text: "Plus tard",
-                  action: later,
+                  action: closeModal,
                   className: "text-[var(--secondary)]/70",
                 }}
               />
@@ -64,23 +80,27 @@ const InstallPrompt = () => {
           </div>
         ),
       });
+    };
+
+    let timer = 0;
+    const schedule = () => {
+ 
+      timer = window.setTimeout(ask, 1500);
+    };
+
+
+    if (deferredPrompt) schedule();
 
     const onBeforeInstall = (e: Event) => {
-      e.preventDefault(); 
-      deferred = e as BeforeInstallPromptEvent;
-      window.setTimeout(ask, 1500);
+      e.preventDefault();
+      deferredPrompt = e as BeforeInstallPromptEvent;
+      schedule();
     };
-
-    const onInstalled = () => {
-      remember();
-      deferred = null;
-    };
-
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
-    window.addEventListener("appinstalled", onInstalled);
+
     return () => {
+      window.clearTimeout(timer);
       window.removeEventListener("beforeinstallprompt", onBeforeInstall);
-      window.removeEventListener("appinstalled", onInstalled);
     };
   }, [openModal, closeModal]);
 
