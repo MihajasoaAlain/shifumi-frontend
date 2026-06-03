@@ -1,9 +1,10 @@
 "use client";
 
-import { ButtonHTMLAttributes } from "react";
+import { ButtonHTMLAttributes, ReactNode } from "react";
 
 interface ButtonProps {
   text: string;
+  icon?: ReactNode;
   action?: () => void;
   type?: ButtonHTMLAttributes<HTMLButtonElement>["type"];
   disabled?: boolean;
@@ -18,7 +19,10 @@ export default function Button({ buttomProps }: { buttomProps: ButtonProps }) {
       onClick={buttomProps.action}
       disabled={buttomProps.disabled}
     >
-      {buttomProps.text}
+      <span className="inline-flex items-center justify-center gap-2">
+        {buttomProps.icon}
+        {buttomProps.text}
+      </span>
     </button>
   );
 }
