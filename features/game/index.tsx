@@ -17,7 +17,7 @@ const Game = () => {
   const router = useRouter();
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center px-4 py-10">
+    <main className="relative flex-1 min-h-0 flex items-center justify-center px-4 py-10">
       <Backdrop glyphs />
 
       <div className="card hero-fade w-full max-w-md p-8 flex flex-col items-center">
