@@ -25,7 +25,7 @@ export default function Layout({
         />
       </div>
 
-      <div className="flex-1 w-full">
+      <div className="flex-1 w-full flex flex-col">
         {children}
       </div>
 

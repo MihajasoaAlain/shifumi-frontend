@@ -347,7 +347,7 @@ export default function GamePage() {
 
   if (loading) {
     return (
-      <main className="relative min-h-screen flex items-center justify-center">
+      <main className="relative flex-1 min-h-0 flex items-center justify-center">
         <Backdrop />
         <div className="text-center text-[var(--secondary)]">
           <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-dashed border-[var(--primary)]" />
@@ -359,7 +359,7 @@ export default function GamePage() {
 
   if (!game) {
     return (
-      <main className="relative min-h-screen flex items-center justify-center px-4">
+      <main className="relative flex-1 min-h-0 flex items-center justify-center px-4">
         <Backdrop />
         <div className="card p-8 text-center">
           <Question className="mx-auto h-10 w-10 text-[var(--primary)]" />
@@ -401,7 +401,7 @@ export default function GamePage() {
           : "hors ligne";
 
   return (
-    <main className="relative min-h-screen p-4 sm:p-6">
+    <main className="relative flex-1 min-h-0 p-4 sm:p-6">
       <Backdrop />
 
       {/* Alerte "à toi de jouer" déclenchée quand l'adversaire joue */}

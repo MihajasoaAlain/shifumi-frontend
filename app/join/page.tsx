@@ -87,7 +87,7 @@ export default function JoinPage() {
     !username.trim() || !selectedGameId || isLoadingGames || isSubmitting;
 
   return (
-  <main className="relative min-h-screen px-4 py-10 flex justify-center items-start">
+  <main className="relative flex-1 min-h-0 px-4 py-10 flex justify-center items-start">
   <Backdrop glyphs />
   <div className="card hero-fade w-full max-w-xl flex flex-col gap-6 p-7">
     <div className="space-y-2">
