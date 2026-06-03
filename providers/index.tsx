@@ -2,6 +2,7 @@
 import type { ReactNode } from "react";
 import Modal from "@/providers/Modal";
 import ServiceWorker from "@/providers/ServiceWorker";
+import InstallPrompt from "@/providers/InstallPrompt";
 
 type Props = {
   children: ReactNode;
@@ -12,6 +13,7 @@ const Providers = ({ children }: Props) => {
       {children}
       <Modal />
       <ServiceWorker />
+      <InstallPrompt />
     </>
   );
 };
