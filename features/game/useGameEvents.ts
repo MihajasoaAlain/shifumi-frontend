@@ -11,10 +11,18 @@ import { useEffect, useRef, useState } from "react";
 
 type Status = "connecting" | "open" | "closed" | "error";
 
+export type ChoiceSubmission = {
+  username: string;
+  seq: number;
+};
+
 export type UseGameEventsResult = {
   game: Game | null;
   status: Status;
   lastRound: RoundResultData | null;
+
+  roundCount: number;
+  lastSubmission: ChoiceSubmission | null;
   error: string | null;
 };
 
@@ -30,6 +38,9 @@ const useGameEvents = (gameId: string | undefined): UseGameEventsResult => {
   const [game, setGame] = useState<Game | null>(null);
   const [status, setStatus] = useState<Status>("connecting");
   const [lastRound, setLastRound] = useState<RoundResultData | null>(null);
+  const [roundCount, setRoundCount] = useState(0);
+  const [lastSubmission, setLastSubmission] =
+    useState<ChoiceSubmission | null>(null);
   const [error, setError] = useState<string | null>(null);
   const sourceRef = useRef<EventSource | null>(null);
 
@@ -58,13 +69,22 @@ const useGameEvents = (gameId: string | undefined): UseGameEventsResult => {
         }
         if (payload.type === "round.completed" && payload.data) {
           setLastRound(payload.data as RoundResultData);
+          setRoundCount((count) => count + 1);
         }
-        if (
-          payload.type === "game.updated" &&
-          (payload.data as { action?: string } | undefined)?.action ===
-            "rematch"
-        ) {
-          setLastRound(null);
+        if (payload.type === "game.updated") {
+          const data = payload.data as
+            | { action?: string; username?: string }
+            | undefined;
+          if (data?.action === "rematch") {
+            setLastRound(null);
+          }
+          if (data?.action === "choice_submitted" && data.username) {
+            const username = data.username;
+            setLastSubmission((prev) => ({
+              username,
+              seq: (prev?.seq ?? 0) + 1,
+            }));
+          }
         }
       } catch (err) {
         setError(
@@ -87,7 +107,7 @@ const useGameEvents = (gameId: string | undefined): UseGameEventsResult => {
     };
   }, [gameId]);
 
-  return { game, status, lastRound, error };
+  return { game, status, lastRound, roundCount, lastSubmission, error };
 };
 
 export default useGameEvents;
