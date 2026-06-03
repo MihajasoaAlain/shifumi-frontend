@@ -3,11 +3,12 @@ import React from 'react'
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Backdrop from '@/components/Backdrop';
+import { Paper, Rock, Scissors } from '@/components/Svg';
 
 const MOVES = [
-  { emoji: '🪨', label: 'Pierre', rot: '-8deg' },
-  { emoji: '📄', label: 'Papier', rot: '4deg' },
-  { emoji: '✂️', label: 'Ciseaux', rot: '-3deg' },
+  { Icon: Rock, label: 'Pierre', rot: '-8deg' },
+  { Icon: Paper, label: 'Papier', rot: '4deg' },
+  { Icon: Scissors, label: 'Ciseaux', rot: '-3deg' },
 ];
 
 const Home = () => {
@@ -73,7 +74,7 @@ const Home = () => {
               className="flex w-20 flex-col items-center gap-1 rounded-2xl border-2 border-dashed border-[var(--primary)] bg-white px-2 py-3 shadow-[0_0_0_4px_#eaddca,2px_2px_4px_2px_rgba(0,0,0,0.35)] transition-transform duration-200 hover:-translate-y-1.5 hover:rotate-0 sm:w-28 sm:px-3"
               style={{ rotate: move.rot }}
             >
-              <span className="text-3xl sm:text-4xl">{move.emoji}</span>
+              <move.Icon className="h-9 w-9 text-[var(--secondary)] sm:h-10 sm:w-10" />
               <span className="text-xs font-semibold text-[var(--secondary)]/80">
                 {move.label}
               </span>

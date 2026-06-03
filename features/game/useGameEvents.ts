@@ -59,6 +59,13 @@ const useGameEvents = (gameId: string | undefined): UseGameEventsResult => {
         if (payload.type === "round.completed" && payload.data) {
           setLastRound(payload.data as RoundResultData);
         }
+        if (
+          payload.type === "game.updated" &&
+          (payload.data as { action?: string } | undefined)?.action ===
+            "rematch"
+        ) {
+          setLastRound(null);
+        }
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to parse game event",

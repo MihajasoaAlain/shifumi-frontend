@@ -2,6 +2,7 @@
 
 import { createGame } from "@/lib/api";
 import Backdrop from "@/components/Backdrop";
+import { Paper, Rock, Scissors } from "@/components/Svg";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -32,10 +33,13 @@ export default function CreateGamePage() {
 
       <div className="card hero-fade flex w-full max-w-sm flex-col items-center gap-6 p-8">
 
-        <div className="flex items-center gap-3 text-3xl select-none" aria-hidden>
-          <span>🪨</span>
-          <span>📄</span>
-          <span>✂️</span>
+        <div
+          className="flex items-center gap-4 text-[var(--secondary)] select-none"
+          aria-hidden
+        >
+          <Rock className="h-8 w-8" />
+          <Paper className="h-8 w-8" />
+          <Scissors className="h-8 w-8" />
         </div>
 
         <h1 className="font-display text-3xl font-black text-center">

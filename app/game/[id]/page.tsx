@@ -2,23 +2,36 @@
 
 import Backdrop from "@/components/Backdrop";
 import useGameEvents from "@/features/game/useGameEvents";
-import { getGame, joinGame, playGame } from "@/lib/api";
+import { getGame, joinGame, playGame, rematchGame } from "@/lib/api";
 import useCreateUsernameStore from "@/store/game/username";
 import { WINNING_SCORE, type Choice, type Game, type Player } from "@/types/game";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import {
+  Check,
+  Eye,
+  Handshake,
+  Paper,
+  Question,
+  Replay,
+  Rock,
+  Scissors,
+  Sparkles,
+  Trophy,
+  type SvgIcon,
+} from "@/components/Svg";
 
-const CHOICES: { value: Choice; label: string; emoji: string }[] = [
-  { value: "rock", label: "Pierre", emoji: "🪨" },
-  { value: "paper", label: "Papier", emoji: "📄" },
-  { value: "scissors", label: "Ciseaux", emoji: "✂️" },
-];
-
-const CHOICE_EMOJI: Record<string, string> = {
-  rock: "🪨",
-  paper: "📄",
-  scissors: "✂️",
+const CHOICE_ICON: Record<Choice, SvgIcon> = {
+  rock: Rock,
+  paper: Paper,
+  scissors: Scissors,
 };
+
+const CHOICES: { value: Choice; label: string }[] = [
+  { value: "rock", label: "Pierre" },
+  { value: "paper", label: "Papier" },
+  { value: "scissors", label: "Ciseaux" },
+];
 
 function PlayerSlot({
   player,
@@ -68,8 +81,14 @@ function PlayerSlot({
       <p className="font-display text-5xl font-black leading-none text-[var(--secondary)]">
         {player.score}
       </p>
-      <p className="text-xs text-[var(--secondary)]/70">
-        {player.hasChosen ? "a joué ✓" : "à son tour de jouer"}
+      <p className="flex items-center gap-1 text-xs text-[var(--secondary)]/70">
+        {player.hasChosen ? (
+          <>
+            <Check className="h-3.5 w-3.5" /> a joué
+          </>
+        ) : (
+          "à son tour de jouer"
+        )}
       </p>
     </div>
   );
@@ -102,6 +121,9 @@ export default function GamePage() {
 
   const [playing, setPlaying] = useState(false);
   const [playError, setPlayError] = useState("");
+
+  const [rematching, setRematching] = useState(false);
+  const [rematchError, setRematchError] = useState("");
 
   useEffect(() => {
     if (!gameId) return;
@@ -170,6 +192,23 @@ export default function GamePage() {
     }
   };
 
+  const handleRematch = async () => {
+    try {
+      setRematching(true);
+      setRematchError("");
+      const updated = await rematchGame(gameId);
+      // The SSE stream also broadcasts this, but update locally so the UI
+      // resets immediately even if the event is in flight.
+      setInitialGame(updated);
+    } catch (err) {
+      setRematchError(
+        err instanceof Error ? err.message : "Failed to restart game",
+      );
+    } finally {
+      setRematching(false);
+    }
+  };
+
   const loading = initialLoading && !game;
 
   if (loading) {
@@ -189,7 +228,7 @@ export default function GamePage() {
       <main className="relative min-h-screen flex items-center justify-center px-4">
         <Backdrop />
         <div className="card p-8 text-center">
-          <p className="text-3xl">🤷</p>
+          <Question className="mx-auto h-10 w-10 text-[var(--primary)]" />
           <p className="mt-2 font-display text-lg text-[var(--secondary)]">
             {initialError ?? streamError ?? "Aucune partie trouvée."}
           </p>
@@ -263,15 +302,17 @@ export default function GamePage() {
             role="status"
             aria-live="polite"
           >
-            <span className="text-5xl" aria-hidden>
-              🏆
-            </span>
+            <Trophy className="h-14 w-14" />
             <p className="font-display text-3xl font-black leading-none drop-shadow">
               {iAmChampion ? "Victoire !" : `${champion} gagne la partie !`}
             </p>
-            <p className="text-sm font-medium text-white/90">
+            <p className="flex items-center gap-1.5 text-sm font-medium text-white/90">
               Premier à {WINNING_SCORE} manches remportées
-              {iAmChampion ? " — bravo à toi 🎉" : ""}
+              {iAmChampion && (
+                <>
+                  — bravo à toi <Sparkles className="h-4 w-4" />
+                </>
+              )}
             </p>
           </section>
         )}
@@ -299,20 +340,30 @@ export default function GamePage() {
         {/* Résultat de la dernière manche */}
         {lastRound && (
           <section className="card hero-fade flex flex-col items-center gap-3 p-5">
-            <p className="font-display text-xl font-bold text-[var(--secondary)]">
-              {lastRound.result === "draw"
-                ? "🤝 Égalité"
-                : `🏆 ${lastRound.winner} l'emporte`}
+            <p className="flex items-center gap-2 font-display text-xl font-bold text-[var(--secondary)]">
+              {lastRound.result === "draw" ? (
+                <>
+                  <Handshake className="h-6 w-6 text-[var(--primary)]" /> Égalité
+                </>
+              ) : (
+                <>
+                  <Trophy className="h-6 w-6 text-[var(--primary)]" />{" "}
+                  {lastRound.winner} l&apos;emporte
+                </>
+              )}
             </p>
             <div className="flex items-center gap-6">
-              {Object.entries(lastRound.choices).map(([name, choice]) => (
-                <div key={name} className="flex flex-col items-center gap-1">
-                  <span className="text-4xl">{CHOICE_EMOJI[choice] ?? "❔"}</span>
-                  <span className="text-xs text-[var(--secondary)]/70">
-                    {name}
-                  </span>
-                </div>
-              ))}
+              {Object.entries(lastRound.choices).map(([name, choice]) => {
+                const ChoiceIcon = CHOICE_ICON[choice] ?? Question;
+                return (
+                  <div key={name} className="flex flex-col items-center gap-1">
+                    <ChoiceIcon className="h-10 w-10 text-[var(--secondary)]" />
+                    <span className="text-xs text-[var(--secondary)]/70">
+                      {name}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </section>
         )}
@@ -344,8 +395,9 @@ export default function GamePage() {
 
         {!isPlayer && isFull && (
           <section className="card hero-fade p-6 text-center">
-            <p className="text-[var(--secondary)]/80">
-              👀 Cette partie est complète. Vous la suivez en spectateur.
+            <p className="flex items-center justify-center gap-2 text-[var(--secondary)]/80">
+              <Eye className="h-5 w-5" /> Cette partie est complète. Vous la
+              suivez en spectateur.
             </p>
           </section>
         )}
@@ -362,11 +414,33 @@ export default function GamePage() {
                     : "À toi de jouer !"}
             </h2>
             {isGameOver ? (
-              <p className="text-center text-[var(--secondary)]/70">
-                {iAmChampion
-                  ? "Tu as atteint le score gagnant. 🎉"
-                  : `${champion} a atteint ${WINNING_SCORE} manches. Mieux la prochaine fois !`}
-              </p>
+              <div className="flex flex-col items-center gap-4">
+                <p className="flex items-center justify-center gap-1.5 text-center text-[var(--secondary)]/70">
+                  {iAmChampion ? (
+                    <>
+                      Tu as atteint le score gagnant.{" "}
+                      <Sparkles className="h-4 w-4 text-[var(--primary)]" />
+                    </>
+                  ) : (
+                    `${champion} a atteint ${WINNING_SCORE} manches. Mieux la prochaine fois !`
+                  )}
+                </p>
+                <button
+                  onClick={handleRematch}
+                  disabled={rematching}
+                  className="button text-lg disabled:opacity-60"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <Replay className="h-5 w-5" />
+                    {rematching ? "..." : "Rejouer"}
+                  </span>
+                </button>
+                {rematchError && (
+                  <p className="text-center text-sm text-red-600">
+                    {rematchError}
+                  </p>
+                )}
+              </div>
             ) : !isFull ? (
               <p className="text-center text-[var(--secondary)]/70">
                 Partage le code <span className="font-mono font-bold">{game.id}</span> pour
@@ -376,19 +450,22 @@ export default function GamePage() {
               <p className="text-center text-3xl">⏳</p>
             ) : (
               <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                {CHOICES.map((choice) => (
-                  <button
-                    key={choice.value}
-                    onClick={() => handlePlay(choice.value)}
-                    disabled={!canPlay}
-                    className="flex flex-col items-center gap-2 rounded-[15px] border-2 border-dashed border-[var(--primary)] bg-[#eaddca] px-1 py-4 text-[var(--secondary)] shadow-[0_0_0_4px_#eaddca,2px_2px_4px_2px_rgba(0,0,0,0.45)] transition-transform hover:-translate-y-1 active:translate-x-[0.08em] active:translate-y-[0.08em] disabled:opacity-60 disabled:hover:translate-y-0 sm:py-5"
-                  >
-                    <span className="text-4xl sm:text-5xl">{choice.emoji}</span>
-                    <span className="text-xs font-semibold sm:text-sm">
-                      {choice.label}
-                    </span>
-                  </button>
-                ))}
+                {CHOICES.map((choice) => {
+                  const ChoiceIcon = CHOICE_ICON[choice.value];
+                  return (
+                    <button
+                      key={choice.value}
+                      onClick={() => handlePlay(choice.value)}
+                      disabled={!canPlay}
+                      className="flex flex-col items-center gap-2 rounded-[15px] border-2 border-dashed border-[var(--primary)] bg-[#eaddca] px-1 py-4 text-[var(--secondary)] shadow-[0_0_0_4px_#eaddca,2px_2px_4px_2px_rgba(0,0,0,0.45)] transition-transform hover:-translate-y-1 active:translate-x-[0.08em] active:translate-y-[0.08em] disabled:opacity-60 disabled:hover:translate-y-0 sm:py-5"
+                    >
+                      <ChoiceIcon className="h-10 w-10 sm:h-12 sm:w-12" />
+                      <span className="text-xs font-semibold sm:text-sm">
+                        {choice.label}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             )}
             {playError && (
