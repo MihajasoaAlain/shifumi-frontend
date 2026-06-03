@@ -8,9 +8,11 @@ import { WINNING_SCORE, type Choice, type Game, type Player } from "@/types/game
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
+  Bell,
   Check,
   Eye,
   Handshake,
+  Hourglass,
   Paper,
   Question,
   Replay,
@@ -33,6 +35,42 @@ const CHOICES: { value: Choice; label: string }[] = [
   { value: "scissors", label: "Ciseaux" },
 ];
 
+
+function playDing() {
+  try {
+    const Ctx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext })
+        .webkitAudioContext;
+    const ctx = new Ctx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = "sine";
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.3);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.3);
+    osc.onended = () => ctx.close();
+  } catch {
+    /* audio not available — silent fallback */
+  }
+}
+
+// Avatars animaux générés à la volée d'après le pseudo (déterministe).
+// RoboHash, gratuit et sans clé ; set4 = chatons. On ne retombe sur les
+// initiales que si l'avatar est indisponible (erreur de chargement).
+const AVATAR_SET = "set4";
+
+function avatarUrl(username: string) {
+  return `https://robohash.org/${encodeURIComponent(
+    username,
+  )}.png?set=${AVATAR_SET}&size=150x150`;
+}
+
 function PlayerSlot({
   player,
   isMe,
@@ -40,6 +78,10 @@ function PlayerSlot({
   player: Player | undefined;
   isMe: boolean;
 }) {
+  const [avatarStatus, setAvatarStatus] = useState<"loading" | "ok" | "error">(
+    "loading",
+  );
+
   if (!player) {
     return (
       <div className="card flex flex-1 flex-col items-center gap-2 p-5 opacity-60">
@@ -69,8 +111,19 @@ function PlayerSlot({
         isMe ? "ring-2 ring-[var(--primary)] ring-offset-2 ring-offset-[var(--background)]" : ""
       }`}
     >
-      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--primary)] text-lg font-bold text-white">
-        {initials}
+      <div className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-[var(--primary)] text-lg font-bold text-white">
+        {avatarStatus !== "ok" && <span>{initials}</span>}
+        {avatarStatus !== "error" && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={avatarUrl(player.username)}
+            alt={`Avatar de ${player.username}`}
+            onLoad={() => setAvatarStatus("ok")}
+            onError={() => setAvatarStatus("error")}
+            className="absolute inset-0 h-full w-full object-cover transition-opacity duration-300"
+            style={{ opacity: avatarStatus === "ok" ? 1 : 0 }}
+          />
+        )}
       </div>
       <p className="font-display max-w-full truncate px-1 text-base font-semibold text-[var(--secondary)]">
         {player.username}
@@ -110,10 +163,13 @@ export default function GamePage() {
     game: streamGame,
     status,
     lastRound,
+    roundCount,
+    lastSubmission,
     error: streamError,
   } = useGameEvents(joined ? gameId : undefined);
 
   const game = streamGame ?? initialGame;
+  const playerCount = game?.players.length ?? 0;
 
   const [username, setUsername] = useState("");
   const [joining, setJoining] = useState(false);
@@ -124,6 +180,84 @@ export default function GamePage() {
 
   const [rematching, setRematching] = useState(false);
   const [rematchError, setRematchError] = useState("");
+
+  // Visible "à toi de jouer" alert (banner + sound) when the opponent plays.
+  const [turnAlert, setTurnAlert] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!lastSubmission || !storedUsername) return;
+    // Ignore our own submission — we only nudge the player who still has to act.
+    if (lastSubmission.username === storedUsername) return;
+
+    setTurnAlert(`${lastSubmission.username} a joué — à toi !`);
+    playDing();
+
+    const timer = setTimeout(() => setTurnAlert(null), 4000);
+    return () => clearTimeout(timer);
+  }, [lastSubmission, storedUsername]);
+
+  // Cycle des flip cards : dos affiché pendant l'attente → on retourne pour
+  // révéler le résultat quand les deux ont joué (`round.completed`, reçu par les
+  // deux joueurs via `roundCount`) → après quelques secondes on re-retourne au
+  // dos, en attente de la manche suivante. La carte reste montée en permanence
+  // (pas de remontage) pour que les deux retournements s'animent.
+  const REVEAL_MS = 3200;
+  const [revealed, setRevealed] = useState(false);
+
+  useEffect(() => {
+    // Pas de manche jouée (ou rematch qui remet lastRound à null) → dos affiché.
+    if (!roundCount || !lastRound) {
+      setRevealed(false);
+      return;
+    }
+
+    // On force d'abord la face cachée, puis on retourne à la frame suivante.
+    // Sans ça, le joueur qui rejoint arrive sur une partie déjà pleine : sa
+    // carte peut se monter directement dans l'état retourné, et la transition
+    // CSS (false→true) n'est jamais peinte donc l'animation ne joue pas. Ce
+    // double requestAnimationFrame garantit un retournement animé pour les deux
+    // joueurs, quel que soit le moment où la carte a été montée.
+    setRevealed(false);
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => setRevealed(true));
+    });
+
+    // Sur la manche finale, on garde le résultat affiché (la partie est finie).
+    const hideTimer = lastRound.gameOver
+      ? undefined
+      : setTimeout(() => setRevealed(false), REVEAL_MS);
+
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      if (hideTimer) clearTimeout(hideTimer);
+    };
+  }, [roundCount, lastRound]);
+
+  // Flip d'introduction : dès que les deux joueurs sont présents (et avant
+  // qu'une manche soit jouée), chaque joueur voit les cartes se retourner une
+  // fois — aller-retour, purement décoratif. Joué une seule fois par partie.
+  const [introDone, setIntroDone] = useState(false);
+
+  useEffect(() => {
+    if (playerCount < 2 || introDone || roundCount > 0) return;
+
+    setRevealed(false);
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => setRevealed(true));
+    });
+    const flipBack = setTimeout(() => setRevealed(false), 1400);
+    const done = setTimeout(() => setIntroDone(true), 1500);
+
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      clearTimeout(flipBack);
+      clearTimeout(done);
+    };
+  }, [playerCount, introDone, roundCount]);
 
   useEffect(() => {
     if (!gameId) return;
@@ -250,6 +384,11 @@ export default function GamePage() {
     : undefined;
   const iAmChampion = Boolean(champion && champion === storedUsername);
   const canPlay = joined && isFull && !iHaveChosen && !playing && !isGameOver;
+  // L'adversaire a déjà joué et j'attends mon coup → on accentue l'invite.
+  const opponent = storedUsername
+    ? game.players.find((p) => p.username !== storedUsername)
+    : undefined;
+  const myTurnUrgent = canPlay && Boolean(opponent?.hasChosen);
 
   const connectionLabel = !joined
     ? "non connecté"
@@ -264,6 +403,19 @@ export default function GamePage() {
   return (
     <main className="relative min-h-screen p-4 sm:p-6">
       <Backdrop />
+
+      {/* Alerte "à toi de jouer" déclenchée quand l'adversaire joue */}
+      {turnAlert && canPlay && (
+        <div
+          className="hero-fade fixed inset-x-0 top-4 z-50 mx-auto flex w-fit max-w-[90vw] items-center gap-2 rounded-full border-2 border-dashed border-[var(--primary)] bg-[var(--primary)] px-5 py-2.5 text-sm font-semibold text-white shadow-[3px_3px_0_rgba(0,0,0,0.35)]"
+          role="status"
+          aria-live="assertive"
+        >
+          <Bell className="h-4 w-4" />
+          {turnAlert}
+        </div>
+      )}
+
       <div className="max-w-3xl mx-auto space-y-6">
         <header className="card hero-fade flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -337,29 +489,71 @@ export default function GamePage() {
           />
         </section>
 
-        {/* Résultat de la dernière manche */}
-        {lastRound && (
+        {/* Zone de révélation : cartes au dos en attente, retournées pour montrer
+            le résultat quand les deux ont joué, puis remises au dos après un
+            court délai (cf. l'effet REVEAL_MS). */}
+        {isFull && (
           <section className="card hero-fade flex flex-col items-center gap-3 p-5">
             <p className="flex items-center gap-2 font-display text-xl font-bold text-[var(--secondary)]">
-              {lastRound.result === "draw" ? (
-                <>
-                  <Handshake className="h-6 w-6 text-[var(--primary)]" /> Égalité
-                </>
+              {revealed && lastRound ? (
+                lastRound.result === "draw" ? (
+                  <>
+                    <Handshake className="h-6 w-6 text-[var(--primary)]" /> Égalité
+                  </>
+                ) : (
+                  <>
+                    <Trophy className="h-6 w-6 text-[var(--primary)]" />{" "}
+                    {lastRound.winner} l&apos;emporte
+                  </>
+                )
               ) : (
                 <>
-                  <Trophy className="h-6 w-6 text-[var(--primary)]" />{" "}
-                  {lastRound.winner} l&apos;emporte
+                  <Question className="h-6 w-6 text-[var(--primary)]" /> En attente
+                  des coups…
                 </>
               )}
             </p>
-            <div className="flex items-center gap-6">
-              {Object.entries(lastRound.choices).map(([name, choice]) => {
-                const ChoiceIcon = CHOICE_ICON[choice] ?? Question;
+            <div className="flex items-end gap-6">
+              {game.players.map((player) => {
+                const choice = lastRound?.choices?.[player.username];
+                const ChoiceIcon = choice
+                  ? CHOICE_ICON[choice] ?? Question
+                  : Question;
+                const isWinner =
+                  revealed &&
+                  lastRound?.result === "win" &&
+                  player.username === lastRound.winner;
                 return (
-                  <div key={name} className="flex flex-col items-center gap-1">
-                    <ChoiceIcon className="h-10 w-10 text-[var(--secondary)]" />
-                    <span className="text-xs text-[var(--secondary)]/70">
-                      {name}
+                  <div
+                    key={player.username}
+                    className="flex flex-col items-center gap-2"
+                  >
+                    <div className="flip-card">
+                      <div
+                        className={`flip-card-inner ${
+                          revealed ? "is-flipped" : ""
+                        }`}
+                      >
+                        {/* Face cachée */}
+                        <div className="flip-card-face flip-card-front">
+                          <Question className="h-9 w-9 text-[var(--primary)]" />
+                        </div>
+                        {/* Face révélée */}
+                        <div
+                          className={`flip-card-face flip-card-back ${
+                            isWinner ? "is-winner" : ""
+                          }`}
+                        >
+                          <ChoiceIcon
+                            className={`h-10 w-10 ${
+                              isWinner ? "text-white" : "text-[var(--secondary)]"
+                            }`}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <span className="max-w-[5.5rem] truncate text-xs text-[var(--secondary)]/70">
+                      {player.username}
                     </span>
                   </div>
                 );
@@ -447,9 +641,13 @@ export default function GamePage() {
                 qu&apos;on te rejoigne.
               </p>
             ) : iHaveChosen ? (
-              <p className="text-center text-3xl">⏳</p>
+              <Hourglass className="mx-auto h-9 w-9 animate-pulse text-[var(--primary)]" />
             ) : (
-              <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              <div
+                className={`grid grid-cols-3 gap-2 sm:gap-4 ${
+                  myTurnUrgent ? "animate-pulse" : ""
+                }`}
+              >
                 {CHOICES.map((choice) => {
                   const ChoiceIcon = CHOICE_ICON[choice.value];
                   return (

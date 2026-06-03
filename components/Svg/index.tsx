@@ -3,6 +3,7 @@
 import {
   ArrowClockwise,
   ArrowLeft as PhArrowLeft,
+  Bell as PhBell,
   Check as PhCheck,
   Coins,
   Eye as PhEye,
@@ -10,6 +11,7 @@ import {
   HandFist,
   HandPalm,
   Handshake as PhHandshake,
+  Hourglass as PhHourglass,
   Plus as PhPlus,
   Question as PhQuestion,
   Scissors as PhScissors,
@@ -48,6 +50,8 @@ export const Trophy = make(PhTrophy, "duotone");
 export const Controller = make(GameController, "duotone");
 export const Eye = make(PhEye, "duotone");
 export const Handshake = make(PhHandshake, "duotone");
+export const Bell = make(PhBell, "duotone");
+export const Hourglass = make(PhHourglass, "duotone");
 export const Sparkles = make(Sparkle, "duotone");
 export const Coin = make(Coins, "duotone");
 export const Question = make(PhQuestion, "duotone");
