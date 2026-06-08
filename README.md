@@ -1,24 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Shifumi — Frontend
 
-## Getting Started
+Two-player, real-time **Rock-Paper-Scissors** (Pierre · Papier · Ciseaux) game built with Next.js. This is the web client; it talks to the [Shifumi backend](../Shifumi-backend) over HTTP and SSE.
 
-First, run the development server:
+![Shifumi home screen](docs/screenshot.png)
+
+## Features
+
+-  Create a game and share it, or join an existing one
+-  Real-time rounds over Server-Sent Events (SSE)
+-  Installable PWA (manifest + service worker, standalone display)
+-  Tailwind CSS v4 + SCSS modules, warm minimalist UI
+-  Lightweight global state with Zustand
+
+## Tech stack
+
+- [Next.js 16](https://nextjs.org) (App Router) + [React 19](https://react.dev)
+- TypeScript (strict mode)
+- [Zustand](https://github.com/pmndrs/zustand) for state
+- [Tailwind CSS v4](https://tailwindcss.com) + SCSS modules
+- [Phosphor Icons](https://phosphoricons.com)
+
+## Getting started
+
+### Prerequisites
+
+- Node.js 20+ (or [Bun](https://bun.sh))
+- A running [Shifumi backend](../Shifumi-backend) (defaults to `http://localhost:8080`)
+
+### Install
 
 ```bash
-npm run dev
+npm install
 # or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Configure
 
-## Configuration
-
-The backend URL is read from `NEXT_PUBLIC_API_URL` (see `.env.example`). Copy it and adjust if your backend is not on the default:
+The backend URL is read from `NEXT_PUBLIC_API_URL`. Copy the example file and adjust if your backend is not on the default host:
 
 ```bash
 cp .env.example .env.local
@@ -26,21 +45,33 @@ cp .env.example .env.local
 
 When unset, it falls back to `http://localhost:8080`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Run the dev server
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run dev
+```
 
-## Learn More
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-To learn more about Next.js, take a look at the following resources:
+## Available scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start the development server on port 3000 |
+| `npm run build` | Create a production build |
+| `npm run start` | Run the production build |
+| `npm run lint` | Lint the codebase with ESLint |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## How it works
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. A player **creates a game** — the backend returns a game ID (`game-1`, `game-2`, …).
+2. A second player **joins** with their username; the game becomes `ready`.
+3. Each player submits a choice (`rock` | `paper` | `scissors`). When both have played, the backend resolves the round, updates the score, and broadcasts the result.
+4. The client stays in sync by subscribing to `GET /game/:id/events` (SSE): it receives a `game.snapshot` first, then a stream of `game.updated` and `round.completed` events.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+> **Note:** backend game state is in-memory and process-local, so games are lost when the backend restarts.
+
+## License
+
+Private project.
